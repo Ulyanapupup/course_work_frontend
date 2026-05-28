@@ -1,7 +1,7 @@
 // Импортируем библиотеку axios
 import axios from 'axios';
 
-// Создаём настроенный экземпляр axios
+// Настроенный экземпляр axios
 const apiClient = axios.create({
     baseURL: 'http://localhost:8080/api',  // Базовый адрес — прибавляется к каждому запросу
     withCredentials: true,                  // Разрешаем отправку куки (для кросс-доменных запросов)
@@ -13,7 +13,7 @@ apiClient.interceptors.request.use((config) => {
     
     // Не добавляем токен для auth запросов (логин, регистрация)
     if (config.url.includes('/auth/')) {
-        return config;   // просто возвращаем запрос без изменений
+        return config;   // возвращаем запрос без изменений
     }
     
     // Для всех остальных запросов — добавляем токен
@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
             window.location.href = '/login';         // отправляем на страницу входа
         }
         
-        // Пробрасываем ошибку дальше, чтобы компонент мог её обработать (например, показать alert)
+        // Пробрасываем ошибку дальше, чтобы компонент мог её обработать
         return Promise.reject(error);
     }
 );

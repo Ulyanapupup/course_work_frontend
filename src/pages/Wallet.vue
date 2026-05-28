@@ -1,4 +1,6 @@
 <template>
+<!-- Главная страница - кошелек -->
+<!-- Динамическая высота страницы зависит от количества карт -->
     <div 
         class="wallet-page"
         :style="{ minHeight: pageHeight + 'vh' }"
@@ -7,8 +9,11 @@
             <img class="wallet-back" src="../assets/wallet-back.png" />
 
             <!-- КАРТЫ -->
+            <!-- Высота контейнера зависит от количества карт -->
             <div class="cards-container"
                  :style="{ height: (cards.length * 100 + 200) + 'px' }">
+                <!-- Карты располагаются друг над другом с наложением -->
+                <!-- bottom - вертикальное смещение, zIndex - порядок наложения -->
                 <div
                     v-for="(card, index) in cards"
                     :key="card.id"
@@ -19,6 +24,7 @@
                     }"
                 >
                     <img class="card-image" src="../assets/card.png" />
+                    <!-- НАЗВАНИЕ КАРТЫ (с возможностью редактирования) -->
                     <div class="card-title">
                         <input
                             v-if="card.isEditing"
@@ -30,6 +36,7 @@
                             {{ card.name }}
                         </div>
                     </div>
+                    <!-- КНОПКИ УПРАВЛЕНИЯ КАРТОЙ -->
                     <div class="card-buttons">
                         <img
                             v-if="!card.isEditing"
@@ -52,7 +59,7 @@
                 </div>
             </div>
 
-            <!-- ДОБАВИТЬ КАРТУ -->
+            <!-- КНОПКА ДОБАВЛЕНИЯ НОВОЙ КАРТЫ -->
             <div 
                 class="add-button-wrapper"
                 :class="{ disabled: isMaxCards }"
@@ -64,17 +71,18 @@
 
             <img class="wallet-front" src="../assets/wallet-front.png" />
 
-            <!-- ОТКРЫТАЯ КАРТА -->
+            <!-- ПАНЕЛЬ ОТКРЫТОЙ КАРТЫ -->
             <div v-if="selectedCard" class="opened-card-panel">
+                <!-- ФОРМА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ КЕШБЭКА -->
                 <div class="cashback-form">
-                    <!-- 1. Сначала вид кешбэка -->
+                    <!-- 1. Сначала тип кешбэка -->
                     <select v-model="cashbackForm.type" class="cashback-select">
                         <option value="REGULAR">Обычный (рубли)</option>
                         <option value="POINTS">Баллы (с конвертацией)</option>
                         <option value="SPECIAL">Особый (по дате/дню)</option>
                     </select>
 
-                    <!-- 2. Затем категория -->
+                    <!-- 2. Затем выбор категория -->
                     <select v-model="cashbackForm.categoryId" class="cashback-select">
                         <option value="" disabled>Выберите категорию</option>
                         <option 
@@ -86,22 +94,28 @@
                         </option>
                     </select>
 
-                    <!-- 3. Затем процент -->
+                    <!-- 3. Затем ввод процент -->
                     <input v-model.number="cashbackForm.percent" type="number" step="0.1" placeholder="Процент" class="cashback-input"/>
 
-                    <!-- 4. Затем остальное (баллы или особый) -->
+                    <!-- 4. Доп поля для других типов -->
+
+                    <!-- Для типа БАЛЛЫ - поле курса конвертации -->
                     <div v-if="cashbackForm.type === 'POINTS'" class="points-fields">
                         <input v-model.number="cashbackForm.conversionRate" type="number" step="0.1" 
                             placeholder="Курс: 1 балл = ? руб" class="cashback-input"/>
                     </div>
 
+                    <!-- Для типа ОСОБЫЙ - выбор условий действия -->
                     <div v-if="cashbackForm.type === 'SPECIAL'" class="special-fields">
+                        
+                        <!-- Подтип особого кешбэка -->
                         <select v-model="cashbackForm.specialType" class="cashback-select special-select">
                             <option value="weekday">Каждый день недели</option>
                             <option value="period">Период дат</option>
                             <option value="single">Конкретная дата</option>
                         </select>
 
+                        <!-- Для типа "день недели" - выбор дня -->
                         <div v-if="cashbackForm.specialType === 'weekday'" class="date-fields-group">
                             <select v-model="cashbackForm.weekDay" class="cashback-select date-field">
                                 <option :value="1">Понедельник</option>
@@ -114,22 +128,26 @@
                             </select>
                         </div>
 
+                        <!-- Для типа "период дат" - начальная и конечная дата -->
                         <div v-if="cashbackForm.specialType === 'period'" class="date-fields-group period-group">
                             <input type="date" v-model="cashbackForm.startDate" class="cashback-input date-field date-start"/>
                             <span class="date-separator">—</span>
                             <input type="date" v-model="cashbackForm.endDate" class="cashback-input date-field date-end"/>
                         </div>
 
+                        <!-- Для типа "конкретная дата" - одна дата -->
                         <div v-if="cashbackForm.specialType === 'single'" class="date-fields-group">
                             <input type="date" v-model="cashbackForm.startDate" class="cashback-input date-field"/>
                         </div>
                     </div>
 
+                    <!-- КНОПКА СОХРАНЕНИЯ КЕШБЭКА -->
                     <button class="cashback-save-button" @click="saveCashback">
                         {{ editingCashback ? 'Сохранить изменения' : 'Добавить кешбэк' }}
                     </button>
                 </div>
 
+                <!-- ОТКРЫТАЯ КАРТА -->
                 <img class="opened-card-image" src="../assets/card.png" />
 
                 <div class="opened-card-title">
@@ -144,8 +162,10 @@
                     />
                 </div>
 
+                <!-- КОНТЕЙНЕР СО СПИСКОМ КЕШБЭКОВ (с пагинацией) -->
                 <div class="cashbacks-container">
-                    <!-- Стрелка влево -->
+
+                    <!-- стредка влево -->
                     <div 
                         class="cashback-arrow left" 
                         @click="prevCashbackPage"
@@ -158,11 +178,13 @@
 
                     <!-- Список кешбэков текущей страницы -->
                     <div class="cashbacks-list">
+                        <!-- Реальные кешбэки -->
                         <div
                             v-for="(cashback, idx) in paginatedCashbacks"
                             :key="cashback.id"
                             class="cashback-item"
                         >
+                            <!-- Иконка категории -->
                             <div class="cashback-icon">
                                 <img
                                     class="cashback-category-image"
@@ -170,12 +192,15 @@
                                     alt=""
                                 />
                             </div>
+
+                            <!-- Название и процент -->
                             <div class="cashback-name">
                                 {{ cashback.category.name }}
                             </div>
                             <div class="cashback-percent">
                                 {{ cashback.percent }}%
                             </div>
+
                             <div class="cashback-buttons">
                                 <img
                                     class="cashback-action-button"
@@ -190,7 +215,7 @@
                             </div>
                         </div>
 
-                        <!-- Заглушки для пустых мест -->
+                        <!-- Заглушки для пустых мест кешбэков -->
                         <div 
                             v-for="n in (CASHBACKS_PER_PAGE - paginatedCashbacks.length)" 
                             :key="'empty-' + n"
@@ -225,6 +250,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+// Импорт API-функций для работы с картами и кешбэками
 import { 
     getCards, 
     createCard, 
@@ -234,32 +260,38 @@ import {
     updateCashback as apiUpdateCashback,
     deleteCashback as apiDeleteCashback
 } from '../api/cards'
+// Импорт API-функции для получения категорий кешбэка
 import { getCashbackCategories } from '../api/categories'
 
 /* ---------------------------
    CARDS (данные карты)
 ----------------------------*/
 
-const cards = ref([])
-const selectedCard = ref(null)
-const cashbackCategories = ref([])
+const cards = ref([])                     // Список всех карт пользователя
+const selectedCard = ref(null)            // Выбранная (открытая) карта
+const cashbackCategories = ref([])        // Список всех категорий кешбэка
 
+// Форма добавления/редактирования кешбэка
 const cashbackForm = ref({
-    categoryId: '',
-    percent: '',
-    type: 'REGULAR',
-    conversionRate: '',
-    specialType: 'weekday',
-    weekDay: 5,
-    startDate: '',
-    endDate: ''
+    categoryId: '',             // ID выбранной категории
+    percent: '',                // процент кешбэка
+    type: 'REGULAR',            // тип: REGULAR / POINTS / SPECIAL
+    conversionRate: '',         // курс конвертации (для баллов)
+    specialType: 'weekday',     // подтип особого кешбэка: weekday / period / single
+    weekDay: 5,                 // день недели (1-7, где 5 = пятница)
+    startDate: '',              // начальная дата (для особого)
+    endDate: ''                 // конечная дата (для периода)
 })
 
+// Редактируемый кешбэк (если не null — значит в режиме редактирования)
 const editingCashback = ref(null)
 
-// Пагинация кешбэков
-const currentCashbackPage = ref(0)
-const CASHBACKS_PER_PAGE = 4
+/* ---------------------------
+   ПАГИНАЦИЯ КЕШБЭКОВ
+----------------------------*/
+
+const currentCashbackPage = ref(0)     // текущая страница
+const CASHBACKS_PER_PAGE = 4           // кол-во кешбэков на одной странице
 
 // Общее количество страниц
 const totalCashbackPages = computed(() => {
@@ -294,34 +326,50 @@ const prevCashbackPage = () => {
     }
 }
 
+/* ---------------------------
+   ЖИЗНЕННЫЙ ЦИКЛ
+----------------------------*/
+
 onMounted(async () => {
+    // Загружаем все карты пользователя с сервера
     const res = await getCards()
+    // Добавляем каждому карте служебные поля для редактирования
     cards.value = res.data.map(card => ({
         ...card,
-        isEditing: false,
-        tempName: ''
+        isEditing: false,     // режим редактирования названия
+        tempName: ''          // временное имя при редактировании
     }))
 
+    // Загрузка всех категорий кешбэка
     const categoriesRes = await getCashbackCategories()
     cashbackCategories.value = categoriesRes.data
 
 })
 
+/* ---------------------------
+   ФУНКЦИИ УПРАВЛЕНИЯ КАРТАМИ
+----------------------------*/
+
+// Открыть карту — показать панель с её кешбэками
 function openCard(card) {
     selectedCard.value = card
-    currentCashbackPage.value = 0
+    currentCashbackPage.value = 0  // сброс пагинации на первую страницу
 }
 
+// Добавить новую карту
 async function addCard() {
-    if (isMaxCards.value) return
+    if (isMaxCards.value) return  // не более 10
 
+    // Создаём объект новой карты с временным названием
     const newCard = {
         name: `Карта ${cards.value.length + 1}`,
         cashbacks: []
     }
 
+    // Отправка запроса на сервер
     const res = await createCard(newCard)
 
+    // Добавляем карту в локальный список
     cards.value.push({
         ...res.data,
         isEditing: false,
@@ -329,11 +377,13 @@ async function addCard() {
     })
 }
 
+// Начать редактирование названия карты
 function startEdit(card) {
     card.isEditing = true
-    card.tempName = card.name
+    card.tempName = card.name  // Текущее имя во временное поле
 }
 
+// Сохранить отредактированное название карты
 async function saveEdit(card) {
     const newName = card.tempName.trim()
 
@@ -342,6 +392,7 @@ async function saveEdit(card) {
         return
     }
 
+    // Обновленное название отправляется на сервер
     const updated = {
         id: card.id,
         name: newName,
@@ -350,30 +401,33 @@ async function saveEdit(card) {
 
     const res = await updateCard(updated)
 
+    // Обновляем локальные данные
     card.name = res.data.name
     card.isEditing = false
 }
 
+/* ---------------------------
+   ФУНКЦИИ УПРАВЛЕНИЯ КЕШБЭКАМИ
+----------------------------*/
+
+// Сохранить кешбэк (добавить новый или обновить существующий)
 async function saveCashback() {
     try {
         if (!selectedCard.value) return
 
-        console.log('Form values:', {
-            categoryId: cashbackForm.value.categoryId,
-            percent: cashbackForm.value.percent,
-            type: cashbackForm.value.type
-        })
-
+        // ВАЛИДАЦИЯ: проверяем, что категория выбрана
         if (!cashbackForm.value.categoryId || cashbackForm.value.categoryId === '') {
             alert('Пожалуйста, выберите категорию')
             return
         }
 
+        // ВАЛИДАЦИЯ: проверяем, что процент указан
         if (!cashbackForm.value.percent && cashbackForm.value.percent !== 0) {
             alert('Пожалуйста, введите процент кешбэка')
             return
         }
 
+        // Преобразуем процент в число и проверяем диапазон
         const percentNum = Number(cashbackForm.value.percent)
         if (isNaN(percentNum)) {
             alert('Процент должен быть числом')
@@ -384,6 +438,7 @@ async function saveCashback() {
             return
         }
 
+        // Базовый объект кешбэка (общие поля)
         let cashbackData = {
             percent: percentNum,
             category: { id: Number(cashbackForm.value.categoryId) },
@@ -394,6 +449,7 @@ async function saveCashback() {
             endDate: null
         }
 
+        // ВАЛИДАЦИЯ: для типа БАЛЛЫ
         if (cashbackForm.value.type === 'POINTS') {
             if (!cashbackForm.value.conversionRate || cashbackForm.value.conversionRate <= 0) {
                 alert('Для баллов укажите курс конвертации (1 балл = X рублей)')
@@ -402,6 +458,7 @@ async function saveCashback() {
             cashbackData.conversionRate = Number(cashbackForm.value.conversionRate)
         }
         
+        // ВАЛИДАЦИЯ: для типа ОСОБЫЙ
         if (cashbackForm.value.type === 'SPECIAL') {
             if (cashbackForm.value.specialType === 'weekday') {
                 if (!cashbackForm.value.weekDay) {
@@ -425,24 +482,32 @@ async function saveCashback() {
             }
         }
 
+        // Если редактируем существующий кешбэк
         if (editingCashback.value) {
             const res = await apiUpdateCashback(editingCashback.value.id, cashbackData)
+            // Находим индекс и заменяем
             const index = selectedCard.value.cashbacks.findIndex(
                 c => c.id === editingCashback.value.id
             )
             selectedCard.value.cashbacks[index] = res.data
+            // Выходим из режима редактирования
             editingCashback.value = null
+
+        // Иначе создаём новый кешбэк
         } else {
             const res = await apiAddCashback(selectedCard.value.id, cashbackData)
             if (!selectedCard.value.cashbacks) {
                 selectedCard.value.cashbacks = []
             }
             selectedCard.value.cashbacks.push(res.data)
+
+            // Переключаемся на последнюю страницу, чтобы увидеть новый кешбэк
             setTimeout(() => {
                 currentCashbackPage.value = totalCashbackPages.value - 1
             }, 100)
         }
 
+        // Сбрасываем форму
         cashbackForm.value = {
             categoryId: '',
             percent: '',
@@ -455,6 +520,7 @@ async function saveCashback() {
         }
 
     } catch (error) {
+        // Обработка ошибок валидации с сервера
         console.error('Ошибка:', error)
         
         if (error.response?.status === 400 && error.response?.data) {
@@ -480,9 +546,11 @@ async function saveCashback() {
     }
 }
 
+// Редактировать кешбэк — заполнить форму его данными
 function editCashback(cashback) {
     editingCashback.value = cashback
 
+    // Определяем подтип особого кешбэка по заполненным полям
     let specialType = 'weekday'
     if (cashback.startDate && cashback.endDate) {
         specialType = 'period'
@@ -492,6 +560,7 @@ function editCashback(cashback) {
         specialType = 'weekday'
     }
 
+    // Заполняем форму данными из выбранного кешбэка
     cashbackForm.value = {
         categoryId: cashback.category?.id || '',
         percent: cashback.percent || '',
@@ -504,6 +573,7 @@ function editCashback(cashback) {
     }
 }
 
+// Сбросить форму (очистить все поля)
 function resetForm() {
     cashbackForm.value = {
         categoryId: '',
@@ -526,39 +596,53 @@ function confirmDeleteCashback(cashback, idx) {
     }
 }
 
+// Удалить кешбэк
 async function removeCashback(cashbackId, realIndex) {
     if (!selectedCard.value) return
 
+    // Запрос на севрер
     await apiDeleteCashback(cashbackId)
 
+    // Удаляем из локального массива
     selectedCard.value.cashbacks.splice(realIndex, 1)
 
+    // Если на текущей странице не осталось элементов — переключаемся на предыдущую
     if (paginatedCashbacks.value.length === 0 && currentCashbackPage.value > 0) {
         currentCashbackPage.value--
     }
 }
 
-// Функция с подтверждением удаления карты
+/* ---------------------------
+   ФУНКЦИИ УДАЛЕНИЯ КАРТЫ
+----------------------------*/
+
+// Подтверждение удаления карты
 function confirmDeleteCard() {
     if (confirm(`Удалить карту? Все кешбэки этой карты также будут удалены.`)) {
         deleteCard()
     }
 }
 
+// Удалить карту
 async function deleteCard() {
     if (!selectedCard.value) return
 
+    // Запрос на сервер
     await apiDeleteCard(selectedCard.value.id)
 
+    // Удаляем карту из локального массива
     cards.value = cards.value.filter(
         card => card.id !== selectedCard.value.id
     )
 
+    // Закрываем панель открытой карты
     selectedCard.value = null
 }
 
+// Максимальное кол-во карт - 10
 const isMaxCards = computed(() => cards.value.length >= 10)
 
+// Получить путь к картинке категории по её ID
 function getCategoryImage(categoryId) {
     const images = {
         0: '/src/assets/categories/0.png',
@@ -591,29 +675,31 @@ function getCategoryImage(categoryId) {
         27: '/src/assets/categories/27.png',
         63: '/src/assets/categories/63.png'
     }
-
     return images[categoryId] || '/src/assets/categories/0.png'
 }
 
+// Динамическая высота страницы (зависит от количества карт)
 const pageHeight = computed(() => {
-    const baseHeight = 90
-    const extraCards = Math.max(0, cards.value.length - 3)
-    return baseHeight + (extraCards * 11.5)
+    const baseHeight = 90   // базовая высота
+    const extraCards = Math.max(0, cards.value.length - 3)   // карты сверх 3 штук
+    return baseHeight + (extraCards * 11.5)   // каждая нвоая карта увеличивает высоту
 })
 </script>
 
 <style scoped>
+/* Основной контейнер страницы */
 .wallet-page {
-    position: relative;
+    position: relative;          /* Для позиционирования вложенных элементов */
     width: 100%;
-    min-height: 100vh;
+    min-height: 100vh;           /* Минимальная высота на весь экран */
     background: radial-gradient(circle at top, #928a82, #665b55);
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-end;   /* Прижимаем содержимое к низу */
     padding-bottom: 20px;
 }
 
+/* Контейнер для всего кошелька */
 .wallet-container {
     position: relative;
     width: 100%;
@@ -622,36 +708,41 @@ const pageHeight = computed(() => {
     align-items: flex-end;
 }
 
+/* Задняя часть кошелька (фоновое изображение) */
 .wallet-back {
     width: 800px;
     position: relative;
-    z-index: 1;
+    z-index: 1;              /* Ниже передней части */
     transform: translateX(-428px);
 }
 
+/* Контейнер со всеми картами */
 .cards-container {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
-    z-index: 10;
-    pointer-events: none;
+    z-index: 10;            /* Выше фонового изображения */
+    pointer-events: none;   /* Отключаем события мыши для контейнера */
 }
 
+/* Отдельная карат */
 .card-wrapper {
     position: absolute;
     left: 25%;
-    transform: translateX(-49%);
+    transform: translateX(-49%);  /* Центрирование относительно левого края */
     transition: 0.3s;
     pointer-events: auto;
 }
 
+/* Изображение карты */
 .card-image {
     width: 650px;
     display: block;
 }
 
+/* Название карты (абсолютное позиционирование поверх картинки) */
 .card-title {
     position: absolute;
     top: 60px;
@@ -661,6 +752,7 @@ const pageHeight = computed(() => {
     font-weight: bold;
 }
 
+/* Поле ввода при редактировании названия карты */
 .card-input {
     font-size: 35px;
     font-weight: bold;
@@ -675,6 +767,7 @@ const pageHeight = computed(() => {
     transition: 0.2s;
 }
 
+/* Кнопки управления картой (редактирование, открыть) */
 .card-buttons {
     position: absolute;
     top: 25px;
@@ -683,16 +776,19 @@ const pageHeight = computed(() => {
     gap: 5px;
 }
 
+/* Стиль каждой кнопки на карте */
 .card-button {
     width: 100px;
     cursor: pointer;
     transition: 0.2s;
 }
 
+/* Анимация кнопок */
 .card-button:hover {
     transform: scale(1.1);
 }
 
+/* Кнопка добавления новой карты */
 .add-button-wrapper {
     position: absolute;
     bottom: 220px;
@@ -705,10 +801,12 @@ const pageHeight = computed(() => {
     align-items: center;
 }
 
+/* Изображение кнопки */
 .wallet-button {
     width: 320px;
 }
 
+/* Текст на кнопке */
 .button-text {
     position: absolute;
     top: 54px;
@@ -717,6 +815,7 @@ const pageHeight = computed(() => {
     font-weight: bold;
 }
 
+/* Передняя часть кошелька (закрывает нижнюю часть карт) */
 .wallet-front {
     position: absolute;
     bottom: -9px;
@@ -726,21 +825,27 @@ const pageHeight = computed(() => {
     pointer-events: none;
 }
 
-/* ПАНЕЛЬ ОТКРЫТОЙ КАРТЫ */
+/* ------------------------------------------
+   ПАНЕЛЬ ОТКРЫТОЙ КАРТЫ (появляется справа)
+------------------------------------------- */
+
+/* Панель открытой карты */
 .opened-card-panel {
     position: fixed;
     right: 80px;
     bottom: -30px;
     width: 850px;
     height: 900px;
-    z-index: 300;
+    z-index: 300;     /* Поверх всего */
 }
 
+/* Изображение открытой карты */
 .opened-card-image {
     width: 100%;
     display: block;
 }
 
+/* Название открытой карты */
 .opened-card-title {
     position: absolute;
     top: 80px;
@@ -750,6 +855,7 @@ const pageHeight = computed(() => {
     color: black;
 }
 
+/* Кнопки в верхней части открытой карты */
 .opened-card-top-buttons {
     position: absolute;
     top: 40px;
@@ -758,16 +864,19 @@ const pageHeight = computed(() => {
     gap: 10px;
 }
 
+/* Стиль кнопок в верхней части */
 .opened-card-button {
     width: 100px;
     cursor: pointer;
     transition: 0.2s;
 }
 
+/* Анимация кнопок */
 .opened-card-button:hover {
     transform: scale(1.1);
 }
 
+/* Контейнер со списком кешбэков и стрелками */
 .cashbacks-container {
     position: absolute;
     top: 160px;
@@ -779,12 +888,14 @@ const pageHeight = computed(() => {
     gap: 15px;
 }
 
+/* Сетка кешбэков */
 .cashbacks-list {
     display: flex;
     justify-content: center;
     gap: 30px;
 }
 
+/* Стредки пагинации */
 .cashback-arrow {
     width: 50px;
     height: 50px;
@@ -798,11 +909,13 @@ const pageHeight = computed(() => {
     margin-top: -110px;
 }
 
+/* Анимация стрелок */
 .cashback-arrow:hover {
     background: rgba(255, 255, 255, 0.66);
     transform: scale(1.05);
 }
 
+/* Отключённые стрелки */
 .cashback-arrow.disabled {
     opacity: 0.3;
     cursor: not-allowed;
@@ -812,6 +925,7 @@ const pageHeight = computed(() => {
     transform: none;
 }
 
+/* Индикатор страниц */
 .page-indicator {
     position: absolute;
     bottom: -40px;
@@ -822,6 +936,7 @@ const pageHeight = computed(() => {
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
+/* Отдельный элемент кешбэка */
 .cashback-item {
     width: 140px;
     display: flex;
@@ -829,15 +944,18 @@ const pageHeight = computed(() => {
     align-items: center;
 }
 
+/* Стиль для пустых элементов-заглушек */
 .cashback-item.empty {
     opacity: 0.3;
 }
 
+/* Иконка пустого кешбэка */
 .empty-icon {
     background: rgba(255, 255, 255, 0.2);
     border: 2px dashed rgba(255, 255, 255, 0.5);
 }
 
+/* Квадратная иконка категории */
 .cashback-icon {
     width: 100px;
     height: 100px;
@@ -849,12 +967,14 @@ const pageHeight = computed(() => {
     box-shadow: 0 4px 10px rgba(0, 27, 85, 0.31);
 }
 
+/* Изображение внутри иконки категории */
 .cashback-category-image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: contain;     /* Сохраняем пропорции */
 }
 
+/* Название категории */
 .cashback-name {
     margin-top: 15px;
     font-size: 23px;
@@ -862,18 +982,21 @@ const pageHeight = computed(() => {
     color: black;
 }
 
+/* Процент кешбэка */
 .cashback-percent {
     margin-top: 5px;
     font-size: 23px;
     color: black;
 }
 
+/* Контейнер с кнопками редактирования и удаления кешбэка */
 .cashback-buttons {
     display: flex;
     gap: 0px;
     margin-top: 10px;
 }
 
+/* Кнопки действий с кешбэком */
 .cashback-action-button {
     width: 70px;
     cursor: pointer;
@@ -884,7 +1007,11 @@ const pageHeight = computed(() => {
     transform: scale(1.1);
 }
 
-/* ФОРМА КЕШБЭКА */
+/* ------------------------------------------
+   ФОРМА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ КЕШБЭКА
+------------------------------------------- */
+
+/* Форма кешбэка */
 .cashback-form {
     position: absolute;
     bottom: 50px;
@@ -900,6 +1027,7 @@ const pageHeight = computed(() => {
     background: rgba(0, 0, 0, 0.15);
 }
 
+/* Общие стили для выпадающих списков и полей ввода */
 .cashback-select,
 .cashback-input {
     height: 40px;
@@ -909,7 +1037,7 @@ const pageHeight = computed(() => {
     font-size: 24px;
 }
 
-/* ОТСТУПЫ ДЛЯ БЛОКОВ В ФОРМЕ */
+/* Контейнер для полей баллов и особого кешбэка */
 .points-fields,
 .special-fields {
     display: flex;
@@ -917,10 +1045,12 @@ const pageHeight = computed(() => {
     gap: 12px;
 }
 
+/* Отступ для выбора подтипа особого кешбэка */
 .special-select {
     margin-bottom: 4px;
 }
 
+/* Группа полей с датами */
 .date-fields-group {
     display: flex;
     flex-direction: column;
@@ -936,6 +1066,7 @@ const pageHeight = computed(() => {
     gap: 8px;
 }
 
+/* Разделитель между датами (тире) */
 .date-separator {
     color: white;
     font-size: 20px;
@@ -972,6 +1103,7 @@ const pageHeight = computed(() => {
     width: 100%;
 }
 
+/* Кнопка сохранения кешбэка */
 .cashback-save-button {
     height: 40px;
     border: none;

@@ -1,4 +1,5 @@
 <template>
+  <!-- СТРАНИЦА АНАЛИТИКИ -->
   <div class="analytics-page">
     <div class="analytics-container">
       
@@ -6,24 +7,29 @@
       <div class="selection-panel">
         <h2 class="panel-title">Выбор списка для анализа</h2>
         
+        <!-- Радио-кнопки для выбора списка -->
         <div class="lists-radio">
           <label 
             v-for="list in lists" 
             :key="list.id" 
             class="list-radio"
           >
+            <!-- Радио-кнопка -->
             <input 
               type="radio" 
               :value="list.id" 
               v-model="selectedListId"
             >
+            <!-- Название списка -->
             <span>{{ list.name }}</span>
+            <!-- Дата покупки (если указана) -->
             <span v-if="list.purchaseDate" class="list-date-badge">
               {{ formatDateOnly(list.purchaseDate) }}
             </span>
           </label>
         </div>
 
+        <!-- Кнопка запуска анализа -->
         <div class="panel-buttons">
           <button 
             class="analyze-button" 
@@ -45,10 +51,12 @@
             :key="report.id" 
             class="report-item"
           >
+            <!-- Клик по отчёту — открыть его -->
             <div class="report-info" @click="openReport(report)">
               <div class="report-name">{{ report.name }}</div>
             </div>
             
+            <!-- Кнопка удаления отчёта -->
             <div class="report-actions">
               <img 
                 class="delete-report-img" 
@@ -63,20 +71,28 @@
 
       <!-- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ -->
       <div class="results-panel" v-if="currentReport">
+        <!-- Шапка результатов -->
         <div class="results-header">
           <div class="results-title">
             <h2 class="panel-title">Результат анализа</h2>
+
+            <!-- Информация о дате покупки (влияет на особые кешбэки) -->
             <div class="purchase-date-info" v-if="currentReport.purchaseDate">
               Дата похода: {{ formatDateOnly(currentReport.purchaseDate) }}
             </div>
+
             <div class="purchase-date-info warning" v-else>
               Дата похода не указана (особые кешбэки не учитывались)
             </div>
           </div>
+
           <div class="results-actions">
+            <!-- Кнопка сохранения отчёта (показывается только для новых отчётов) -->
             <button v-if="!currentReport.id" class="save-report-btn" @click="saveReport">
               Сохранить отчет
             </button>
+
+            <!-- Кнопка закрытия отчёта -->
             <img 
               class="close-report-img" 
               src="../assets/button-close.png" 
@@ -86,46 +102,56 @@
           </div>
         </div>
 
-        <!-- Группируем товары по категориям кешбэка -->
+        <!-- ГРУППИРОВКА ТОВАРОВ ПО КАРТАМ И ПРОЦЕНТАМ -->
         <div 
           v-for="(group, index) in groupedResults" 
           :key="index" 
           class="category-group"
         >
+          <!-- Заголовок группы (название карты и процент) -->
           <div class="category-group-header">
             <span class="category-name">{{ group.displayName }}</span>
           </div>
           
           <div class="category-items">
+            <!-- Товары в этой группе -->
             <div 
               v-for="item in group.items" 
               :key="item.itemName" 
               class="result-item"
               :class="{ purchased: item.purchased }"
             >
+              <!-- Чекбокс для отметки покупки (только для сохранённых отчётов) -->
               <div class="purchase-check" v-if="currentReport.id">
                 <input 
                   type="checkbox" 
                   v-model="item.purchased"
                   @change="savePurchasedStatus"
                 >
+
+              <!-- Информация о товаре -->
               </div>
               <div class="item-info">
                 <div class="item-name">{{ item.itemName }}</div>
                 <div class="item-category">{{ item.categoryName }}</div>
-                <!-- Только conditionDesc (для активных особых или пояснение для баллов) -->
+                
+                <!-- conditionDesc: для активных особых кешбэков или пояснение для баллов -->
                 <div v-if="item.conditionDesc" class="condition-desc">
                   {{ item.conditionDesc }}
                 </div>
-                <!-- Только futureSpecialAdvice (для будущих особых) -->
+                
+                <!-- futureSpecialAdvice: для будущих особых кешбэков -->
                 <div v-if="item.futureSpecialAdvice" class="special-advice">
                   {{ item.futureSpecialAdvice }}
                 </div>
               </div>
+
+              <!-- Информация о кешбэке (если есть) -->
               <div class="cashback-info" v-if="item.percent > 0">
                 <div class="card-name">{{ item.cardName }}</div>
                 <div class="percent">{{ item.percent }}%</div>
               </div>
+
               <div class="no-cashback" v-else>
                 Нет кешбэка
               </div>
@@ -133,7 +159,7 @@
           </div>
         </div>
 
-        <!-- Группа без кешбэка -->
+        <!-- ГРУППА ТОВАРОВ БЕЗ КЕШБЭКА -->
         <div v-if="noCashbackItems.length > 0" class="category-group no-cashback-group">
           <div class="category-group-header">
             <span class="category-name">Без кешбэка</span>
@@ -145,6 +171,8 @@
               class="result-item"
               :class="{ purchased: item.purchased }"
             >
+
+              <!-- Чекбокс для отметки покупки -->
               <div class="purchase-check" v-if="currentReport.id">
                 <input 
                   type="checkbox" 
@@ -152,6 +180,8 @@
                   @change="savePurchasedStatus"
                 >
               </div>
+
+              <!-- Информация о товаре -->
               <div class="item-info">
                 <div class="item-name">{{ item.itemName }}</div>
                 <div class="item-category">{{ item.categoryName }}</div>
@@ -162,6 +192,7 @@
                   {{ item.futureSpecialAdvice }}
                 </div>
               </div>
+
               <div class="no-cashback">
                 Нет подходящей карты
               </div>
@@ -169,29 +200,45 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+// API для работы со списками и аналитикой
 import { getLists } from '../api/lists'
 import { analyzeShoppingLists, saveAnalyticsReport, getAnalyticsReports, deleteAnalyticsReport } from '../api/analytics'
 
+/* ---------------------------
+   РЕАКТИВНЫЕ ПЕРЕМЕННЫЕ
+----------------------------*/
+
+// Список всех списков покупок пользователя
 const lists = ref([])
+// ID выбранного списка для анализа
 const selectedListId = ref(null)
+// Флаг загрузки
 const isLoading = ref(false)
+// Текущий отчёт
 const currentReport = ref(null)
+// Список сохранённых отчётов (загружается с сервера)
 const savedReports = ref([])
 
+/* ---------------------------
+   ВЫЧИСЛЯЕМЫЕ СВОЙСТВА
+----------------------------*/
+
+// Группировка товаров с кешбэком по картам и процентам
 const groupedResults = computed(() => {
   if (!currentReport.value?.results) return []
   
-  const groups = new Map()
+  const groups = new Map() // Используем Map для уникальных групп
   
   currentReport.value.results.forEach(item => {
+    // Только товары, у которых есть кешбэк (процент > 0)
     if (item.percent > 0) {
+      // Уникальный ключ группы: карта + процент + категория
       const key = `${item.cardName}_${item.percent}_${item.categoryName || 'кешбэк'}`
       if (!groups.has(key)) {
         groups.set(key, {
@@ -205,22 +252,33 @@ const groupedResults = computed(() => {
     }
   })
   
+  // Сортируем группы по убыванию процента
   const sortedGroups = Array.from(groups.values())
     .sort((a, b) => b.percent - a.percent)
   
   return sortedGroups
 })
 
+// Товары без кешбэка
 const noCashbackItems = computed(() => {
   if (!currentReport.value?.results) return []
   return currentReport.value.results.filter(item => item.percent === 0 || !item.percent)
 })
 
+/* ---------------------------
+   ЖИЗНЕННЫЙ ЦИКЛ
+----------------------------*/
+
 onMounted(async () => {
-  await loadLists()
-  await loadSavedReports()
+  await loadLists() // Загружаем все списки покупок
+  await loadSavedReports() // Загружаем сохранённые отчёты
 })
 
+/* ---------------------------
+   ФУНКЦИИ ЗАГРУЗКИ ДАННЫХ
+----------------------------*/
+
+// Загрузить все списки покупок пользователя
 async function loadLists() {
   try {
     const res = await getLists()
@@ -230,6 +288,7 @@ async function loadLists() {
   }
 }
 
+// Загрузить все сохранённые отчёты пользователя
 async function loadSavedReports() {
   try {
     const res = await getAnalyticsReports()
@@ -239,6 +298,34 @@ async function loadSavedReports() {
   }
 }
 
+/* ---------------------------
+   ФУНКЦИИ ФОРМАТИРОВАНИЯ ДАТ
+----------------------------*/
+
+// Форматирование даты для отображения
+function formatDateOnly(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
+// Форматирование даты для названия отчёта
+function formatDateForTitle(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
+// Генерация автоматического названия для отчёта
+// Формат: "Название списка (дата похода: ...) — текущая дата"
 function generateReportName(listName, purchaseDate) {
   const today = new Date()
   const todayStr = formatDateForTitle(today)
@@ -251,25 +338,31 @@ function generateReportName(listName, purchaseDate) {
   return name
 }
 
+/* ---------------------------
+   ФУНКЦИЯ АНАЛИЗА
+----------------------------*/
+
+// Запустить анализ выбранного списка
+// Отправляет запрос на сервер, получает результаты и отображает их
 async function analyze() {
-  if (!selectedListId.value) return
+  if (!selectedListId.value) return // ничего не выбрано
   
   isLoading.value = true
   
   try {
+    // Находим выбранный список по ID
     const selectedList = lists.value.find(l => l.id === selectedListId.value)
+    // Отправляем запрос на сервер
     const res = await analyzeShoppingLists([selectedListId.value])
-    
-    // ВРЕМЕННО: выводим в консоль результат анализа
-    console.log('РЕЗУЛЬТАТ АНАЛИЗА:', JSON.stringify(res.data, null, 2))
-    
+    // Генерируем автоматическое название для отчёта
     const autoName = generateReportName(selectedList?.name, selectedList?.purchaseDate)
-    
+    // Добавляем каждому товару поле purchased (отмечен ли как купленный) — пока false
     const resultsWithPurchased = res.data.map(item => ({
       ...item,
       purchased: false
     }))
     
+    // Создаём объект текущего отчёта (без ID — ещё не сохранён)
     currentReport.value = {
       id: null,
       name: autoName,
@@ -286,6 +379,11 @@ async function analyze() {
   }
 }
 
+/* ---------------------------
+   ФУНКЦИИ ДЛЯ РАБОТЫ С СОХРАНЕННЫМИ ОТЧЕТАМИ
+----------------------------*/
+
+// Сохранить текущий отчёт на сервер
 async function saveReport() {
   if (!currentReport.value) return
   
@@ -293,8 +391,10 @@ async function saveReport() {
     const selectedList = lists.value.find(l => l.id === selectedListId.value)
     if (!selectedList) return
     
+    // Убираем поле purchased перед отправкой на сервер (оно нужно только для локального хранения)
     const resultsForSave = currentReport.value.results.map(({ purchased, ...item }) => item)
     
+    // Данные для сохранения
     const reportData = {
       name: currentReport.value.name,
       results: resultsForSave,
@@ -303,18 +403,23 @@ async function saveReport() {
       purchaseDate: selectedList.purchaseDate || null
     }
     
+    // Отправляем на сервер
     const res = await saveAnalyticsReport(reportData)
+    // Обновляем ID текущего отчёта (теперь он сохранён)
     currentReport.value.id = res.data.id
+    // Загружаем статусы покупок из localStorage
     loadPurchasedStatus()
+    // Обновляем список сохранённых отчётов
     await loadSavedReports()
-    // alert('Отчет сохранен!') - УДАЛЕНО
   } catch (error) {
     console.error('Ошибка сохранения отчета:', error)
     alert('Ошибка при сохранении отчета')
   }
 }
 
+// Открыть сохранённый отчёт
 function openReport(report) {
+  // Добавляем каждому товару поле purchased (пока false, потом загрузим из localStorage)
   const resultsWithPurchased = (report.results || []).map(item => ({
     ...item,
     purchased: false
@@ -324,18 +429,28 @@ function openReport(report) {
     ...report,
     results: resultsWithPurchased
   }
+
+  // Восстанавливаем ID выбранного списка (если сохранили)
   selectedListId.value = report.selectedListIds?.[0] || null
+  // Загружаем статусы покупок из localStorage
   loadPurchasedStatus()
 }
 
+// Удалить отчёт
 async function deleteReport(reportId) {
   if (confirm('Удалить этот отчет?')) {
     try {
+      // Удаляем на сервере
       await deleteAnalyticsReport(reportId)
+      // Обновляем список сохранённых отчётов
       await loadSavedReports()
+
+      // Если удалили текущий открытый отчёт — закрываем его
       if (currentReport.value?.id === reportId) {
         currentReport.value = null
       }
+
+      // Удаляем статусы покупок из localStorage
       localStorage.removeItem(`purchased_${reportId}`)
     } catch (error) {
       console.error('Ошибка удаления отчета:', error)
@@ -344,13 +459,20 @@ async function deleteReport(reportId) {
   }
 }
 
+// Закрыть текущий отчёт (вернуться к выбору списка)
 function closeReport() {
   currentReport.value = null
   selectedListId.value = null
 }
 
+/* ---------------------------
+   ФУНКЦИИ ДЛЯ РАБОТЫ СО СТАТУСАМИ ПОКУПОК (localStorage)
+----------------------------*/
+
+// Сохранить статусы покупок (какие товары отмечены купленными)
+// Данные хранятся в localStorage по ключу purchased_{reportId}
 function savePurchasedStatus() {
-  if (!currentReport.value?.id) return
+  if (!currentReport.value?.id) return // только для сохранённых отчётов
   const key = `purchased_${currentReport.value.id}`
   const status = {}
   currentReport.value.results.forEach(item => {
@@ -359,6 +481,7 @@ function savePurchasedStatus() {
   localStorage.setItem(key, JSON.stringify(status))
 }
 
+// Загрузить статусы покупок из localStorage
 function loadPurchasedStatus() {
   if (!currentReport.value?.id) return
   const key = `purchased_${currentReport.value.id}`
@@ -371,27 +494,9 @@ function loadPurchasedStatus() {
   }
 }
 
-function formatDateOnly(date) {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-function formatDateForTitle(date) {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-}
 </script>
 
+/* ОСНОВНОЙ КОНТЕЙНЕР СТРАНИЦЫ */
 <style scoped>
 .analytics-page {
   min-height: 100vh;
@@ -399,10 +504,13 @@ function formatDateForTitle(date) {
   padding: 40px;
 }
 
+/* Контейнер для контента */
 .analytics-container {
   max-width: 1200px;
   margin: 0 auto;
 }
+
+/* ОБЩИЕ СТИЛИ ДЛЯ ПАНЕЛИ */
 
 /* Панели */
 .selection-panel,
@@ -415,6 +523,7 @@ function formatDateForTitle(date) {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
 }
 
+/* Заголовки панелей */
 .panel-title {
   font-size: 28px;
   font-weight: bold;
@@ -431,6 +540,7 @@ function formatDateForTitle(date) {
   margin-bottom: 25px;
 }
 
+/* Одна опция (список) */
 .list-radio {
   display: flex;
   align-items: center;
@@ -446,17 +556,19 @@ function formatDateForTitle(date) {
   background: #d5e3f8;
 }
 
+/* Радио-кнопка */
 .list-radio input {
   width: 25px;
   height: 25px;
   cursor: pointer;
 }
 
+/* Текст названия списка */
 .list-radio span {
   font-size: 20px;
 }
 
-/* Кнопки */
+/* КНОПКИ */
 .panel-buttons {
   display: flex;
 }
@@ -490,6 +602,7 @@ function formatDateForTitle(date) {
   gap: 15px;
 }
 
+/* Один отчёт в списке */
 .report-item {
   display: flex;
   justify-content: space-between;
@@ -504,18 +617,21 @@ function formatDateForTitle(date) {
   background: #c9dbf1;
 }
 
+/* Область с информацией об отчёте */
 .report-info {
   flex: 1;
   cursor: pointer;
   padding-right: 15px;
 }
 
+/* Название отчёта */
 .report-name {
   font-size: 20px;
   font-weight: bold;
   color: #000000;
 }
 
+/* Кнопка удаления отчёта */
 .delete-report-img {
   width: 80px;
   cursor: pointer;
@@ -526,7 +642,7 @@ function formatDateForTitle(date) {
   transform: scale(1.05);
 }
 
-/* Результаты */
+/* Результаты анализа */
 .results-header {
   display: flex;
   justify-content: space-between;
@@ -540,6 +656,7 @@ function formatDateForTitle(date) {
   flex: 1;
 }
 
+/* Информация о дате покупки */
 .purchase-date-info {
   font-size: 23px;
   color: #000000;
@@ -557,6 +674,7 @@ function formatDateForTitle(date) {
   align-items: center;
 }
 
+/* Кнопка сохранения отчёта */
 .save-report-btn {
   padding: 8px 20px;
   background: #477ef5;
@@ -574,6 +692,7 @@ function formatDateForTitle(date) {
   transform: scale(1.02);
 }
 
+/* Кнопка закрытия отчёта */
 .close-report-img {
   width: 80px;
   cursor: pointer;
@@ -584,6 +703,9 @@ function formatDateForTitle(date) {
   transform: scale(1.05);
 }
 
+/* ГРУППЫ ТОВАРОВ */
+
+/* Одна группа */
 .category-group {
   margin-bottom: 30px;
   border: 3px solid rgba(94, 56, 45, 0.66);
@@ -591,26 +713,31 @@ function formatDateForTitle(date) {
   overflow: hidden;
 }
 
+/* Заголовок группы */
 .category-group-header {
   background: #829eda;
   padding: 15px 20px;
-  white-space: pre-line;
+  white-space: pre-line;  /* Позволяет переносить строку (\n) */
 }
 
+/* Название группы */
 .category-name {
   font-size: 20px;
   font-weight: bold;
   color: white;
 }
 
+/* Специальный стиль для группы "Без кешбэка" */
 .no-cashback-group .category-group-header {
   background: #997d6d;
 }
 
+/* Контейнер с товарами внутри группы */
 .category-items {
   padding: 10px;
 }
 
+/* Один товар в результатах */
 .result-item {
   display: flex;
   justify-content: space-between;
@@ -622,7 +749,7 @@ function formatDateForTitle(date) {
   transition: 0.2s;
 }
 
-/* Стиль для купленного товара */
+/* Стиль для отмеченного товара */
 .result-item.purchased {
   opacity: 0.5;
   background: #e8e8e8;
@@ -639,6 +766,7 @@ function formatDateForTitle(date) {
   cursor: pointer;
 }
 
+/* Информация о товаре (название, категория, подсказки) */
 .item-info {
   flex: 1;
 }
@@ -655,7 +783,7 @@ function formatDateForTitle(date) {
   margin-top: 5px;
 }
 
-/* Стили для подсказок */
+/* Подсказка о будущем особом кешбэке */
 .special-advice {
   font-size: 15px;
   color: #727272;
@@ -670,10 +798,12 @@ function formatDateForTitle(date) {
   font-weight: normal;
 }
 
+/* Блок с информацией о кешбэке */
 .cashback-info {
   text-align: right;
 }
 
+/* Название карты */
 .card-name {
   font-size: 20px;
   font-weight: bold;
@@ -687,6 +817,7 @@ function formatDateForTitle(date) {
   color: #3b7cdd;
 }
 
+/* Сообщение об отсутствии кешбэка */
 .no-cashback {
   padding: 8px 15px;
   background: #f5d4d9;
@@ -695,6 +826,7 @@ function formatDateForTitle(date) {
   font-weight: bold;
 }
 
+/* Пояснение для активного особого кешбэка или баллов */
 .condition-desc {
   font-size: 15px;
   color: #666;

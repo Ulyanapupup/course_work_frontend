@@ -8,7 +8,7 @@ import Register from '../pages/Register.vue'
 
 // Функция проверки аутентификации
 // Проверяет, есть ли JWT токен в localStorage браузера
-// !! преобразует значение в boolean: если токен есть → true, если нет → false
+// Преобразует значение в boolean: если токен есть → true, если нет → false
 const isAuthenticated = () => {
   return !!localStorage.getItem('token')
 }
@@ -24,7 +24,7 @@ const routes = [
     { 
       path: '/register', 
       component: Register, 
-      meta: { requiresGuest: true }    // Аналогично: только для неавторизованных
+      meta: { requiresGuest: true }
     },
     
     // Защищённые страницы (только для авторизованных)
@@ -50,9 +50,9 @@ const routes = [
     }
 ]
 
-// Создаём экземпляр роутера
+// Экземпляр роутера
 const router = createRouter({
-    history: createWebHistory(),   // Используем HTML5 History API (красивые URL без #)
+    history: createWebHistory(),   // HTML5 History API (красивые URL без #)
     routes
 })
 

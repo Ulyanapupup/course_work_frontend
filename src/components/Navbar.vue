@@ -1,8 +1,5 @@
 <template>
-  <!-- 
-    Шапка приложения. Показывается ТОЛЬКО если пользователь авторизован.
-    v-if="isAuthenticated" — если false, весь блок не отображается
-  -->
+  <!-- Шапка приложения. Показывается ТОЛЬКО если пользователь авторизован. -->
   <header class="header" v-if="isAuthenticated">
     
     <!-- Панель навигации со ссылками на основные страницы -->
@@ -25,19 +22,16 @@
 </template>
 
 <script setup>
-// Импортируем необходимые модули
 import { ref, onMounted } from 'vue'      // ref — реактивная переменная, onMounted — хук жизненного цикла
-import { useRouter } from 'vue-router'   // useRouter — для программной навигации (перенаправление)
+import { useRouter } from 'vue-router'   // useRouter — перенаправление
 import { jwtDecode } from 'jwt-decode'   // функция для расшифровки JWT токена
 
-// Создаём экземпляр роутера для перенаправления
+// Экземпляр роутера для перенаправления
 const router = useRouter()
 
-// Реактивные переменные
 const isAuthenticated = ref(false)   // авторизован ли пользователь (по умолчанию false)
 const username = ref('')             // имя пользователя (пустое по умолчанию)
 
-// Хук жизненного цикла — вызывается после монтирования компонента (когда компонент отрисовался)
 onMounted(() => {
   checkAuth()   // при загрузке компонента проверяем авторизацию
 })
@@ -71,75 +65,75 @@ function confirmLogout() {
 
 <style scoped>
 
-/* Шапка сайта — гибкий контейнер с элементами по краям */
+/* Шапка сайта */
 .header {
-  display: flex;                /* включаем flex-верстку */
-  justify-content: space-between; /* элементы прижимаются к левому и правому краю */
-  align-items: center;          /* выравнивание по вертикали по центру */
-  padding: 10px 30px;           /* внутренние отступы: сверху/снизу 10px, слева/справа 30px */
-  background: #fffdf6;          /* цвет фона шапки */
-  border-bottom: 2px solid #f3ead7; /* нижняя граница (линия под шапкой) */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 30px;
+  background: #fffdf6;
+  border-bottom: 2px solid #f3ead7;
 }
 
 /* Панель навигации — ссылки в ряд */
 .navbar {
-  display: flex;                /* ссылки выстраиваются в строку */
-  gap: 16px;                    /* расстояние между ссылками */
+  display: flex;
+  gap: 16px;
 }
 
 /* Стили для каждой ссылки в навигации */
 .navbar a {
-  text-decoration: none;        /* убираем подчёркивание */
-  color: #ffffff;               /* цвет текста белый */
-  background: #66432cc7;        /* фон: коричневый с прозрачностью (c7 ≈ 78% непрозрачности) */
-  padding: 12px 28px;           /* внутренние отступы */
-  border-radius: 18px;          /* скругление углов */
-  font-size: 18px;              /* размер шрифта */
-  font-weight: 700;             /* жирность шрифта (bold) */
-  transition: 0.2s;             /* плавная анимация при наведении */
+  text-decoration: none;
+  color: #ffffff;
+  background: #66432cc7;
+  padding: 12px 28px;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  transition: 0.2s;
 }
 
 /* Эффект при наведении курсора на ссылку */
 .navbar a:hover {
-  background: #5e4439;          /* более тёмный коричневый */
+  background: #5e4439;
 }
 
 /* Активная ссылка (на той странице, где находимся) */
 /* router-link-active добавляется автоматически Vue Router */
 .navbar a.router-link-active {
-  background: #4c7fdf;          /* синий фон — выделяем текущую страницу */
-  color: #ffffff;               /* белый текст */
+  background: #4c7fdf;
+  color: #ffffff;
 }
 
 /* Блок с именем пользователя и кнопкой выхода */
 .user-info {
-  display: flex;                /* элементы в строку */
-  align-items: center;          /* вертикальное выравнивание по центру */
-  gap: 15px;                    /* расстояние между именем и кнопкой */
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 /* Имя пользователя */
 .username {
-  color: #66432c;               /* тёмно-коричневый цвет */
-  font-weight: bold;            /* жирный шрифт */
-  font-size: 18px;              /* размер текста */
+  color: #66432c;
+  font-weight: bold;
+  font-size: 18px;
 }
 
 /* Кнопка выхода */
 .logout-btn {
-  border: none;                 /* убираем стандартную рамку */
-  background: #b42525;          /* красноватый фон */
-  color: white;                 /* белый текст */
-  padding: 12px 28px;           /* внутренние отступы */
-  border-radius: 18px;          /* скругление углов */
-  cursor: pointer;              /* меняем курсор на указатель (рука) */
-  font-size: 18px;              /* размер шрифта */
-  font-weight: 700;             /* жирный шрифт */
-  transition: 0.2s;             /* плавная анимация при наведении */
+  border: none;
+  background: #b42525;
+  color: white;
+  padding: 12px 28px;
+  border-radius: 18px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  transition: 0.2s;
 }
 
 /* Эффект при наведении на кнопку выхода */
 .logout-btn:hover {
-  background: #751919;          /* более тёмный красный */
+  background: #751919;
 }
 </style>
